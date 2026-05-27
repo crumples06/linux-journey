@@ -64,4 +64,21 @@ I also figured out the you can put multiple options at the same time, for exampl
 * `rm file1 file2`  
 * `rm -r dir1 dir2`  
 
+## I/O Redirection
+* As soon as i saw this, i recognized that this is what makes the complicated long commands that i see online possible.  
+* i had this problem befoe where `ls` command would give a very long ouptu in standard output (terminal) which was hard to navigate. With `>` i can redirect the standard output into another process/function or into a file.  
+* i did `ls -l > list.txt` in usr/bin which made navigating all those files much easier through the text file.  
+* `|` is a pipeline, it takes the standard output of a command and feeds it into the standard output of another command. Like `ls -l | less` my favoriate command for looking at big directories wihtout making a new text file using the command i mentioned above.  
+  
+  
+I was playing with the `ls` command and i was trying to only get a select files printed based on a criteria. So i did `ls l*`, it instead printed the directoried starting with l and all the files and directories present in those directories respectively. It was a very interesting find.  
+
+## Arithmetic
+One more interesting thing i found out, i can do arithmetic operations in terminal.  
+`echo $((2+3+7))` or `echo $(((5**2)+3))`  
+  
+## Brace Expansion
+Used to create multipletext strings from a pattern.  
+`echo F-{A,B,C}-B` will print "F-A-B F-B-B F-C-B"  
+`echo {1..5}` will print "1 2 3 4 5"  
 
