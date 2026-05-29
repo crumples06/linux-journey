@@ -82,3 +82,33 @@ Used to create multipletext strings from a pattern.
 `echo F-{A,B,C}-B` will print "F-A-B F-B-B F-C-B"  
 `echo {1..5}` will print "1 2 3 4 5"  
 
+## chmod command  
+It's used to modify permissions of files.  
+there are 3 permissions rwx, it can be represented in binary as 111.  
+There are 3 different sets of permissions as i saw in `ls -l`.  
+So, i can set permissions for all three sets by 3 integers, for example 755 will mean 111101101 which is rwxr-xr-x.  
+`chmod 755 week-1.md`  
+
+## Scripts
+I finally started with scripts, it is the reason i started this journey in the first place.  
+I created a simple hello world script, to run it i have to type the entire path of the file, but i want to be able to run my scripts on wherever just like the in-built command like `ls`.  
+So, i looked into how to do this.  
+This lead me to the PATH variable. When i type `echo $PATH` in terminal, it shows me a list of directories (their paths) where the shell looks for commands. Like if i type a command in terminal, shell will look in these places for that command sequentially and when it finds it, it rums that script.  
+So, if i want to run my scripts as commands i need to put my script in one of these paths.  
+One of these paths is `/home/tanish/.local/bin`, so i decided to store the script here.  
+
+* One important things i learned is that the file has to named just as the name of the command, for example i created file helloworld.txt and then i ran `helloworld` and it was not working.  
+* I needed to make the file name only `helloworld` as .txt is not required for scripts. Then when i ran `helloworld` in terminal, the command ran properly as intended.  
+
+## ALias
+I can shorten commands, like make aliases of commands. Example: `alias l = 'ls -l` so now whenever i run `l`, `ls -l` will run instead in the background.  
+I can add it to the .bashrc file in `~` which makes it a permenant thing. If i want it as a temporary thing only for a terminal session then i can just run it in the terminal.  
+To make bigger we use shell functions. like,
+'''
+today() {
+echo -n "Today's date is "
+date +"%A, %B %-d, %Y"
+}
+'''
+
+
