@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#### Constants
+
+title="System Information"
+
+#### Functions
+
+system_info()
+{
+	echo "function system_info"
+}
+
+show_uptime()
+{
+	echo "<h2>System Uptime</h2>"
+        echo "<pre>"
+        uptime
+        echo "</pre>"
+
+}
+
+drive_space()
+{
+	echo "<h2>Drive Space"
+	echo "<pre>"
+	df -h
+	echo "</pre>"
+}
+
+home_space()
+{
+	echo "function home_space"
+}
+
+#### Main
+
+cat <<- __EOF__
+<html>
+<head>
+	<title>
+	$title $HOSTNAME
+	</title>
+</head>
+<body>
+	<h1>$title</h1>
+	<p>$TIME_STAMP</p>
+	$(system_info)
+	$(show_uptime)
+	$(drive_space)
+	$(home_space)
+</body>
+</html>
+__EOF__
