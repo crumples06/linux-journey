@@ -11,3 +11,34 @@ I can also use environment variable like `$HOSTNAME`
 After writing my html output in a script, i wanted a proper html file that i can run on browser.  
 To create a html file i did `./sysinfo > ./sysinfo.html`. Here the `>` is output redirection, it is redirecting the output of the script which is a html code to an html file which i can run.  
 
+## Exit Status  
+I learned that every command issue a value to the system when they terminate known as an exit status. It is a number, if it 0 then the command was successfull, if it is anything else than 0 then the command was unsuccessful.
+You can if a command was successful or not after its execution by running `echo $?`, it will print the exit status if the previous command.
+One confusing thing i learned was that the exit status for `true` is 0 and exit status for `false` is 1. 
+So, in linux, 0 means successful/true, and anything else is a failure.
+
+## test command
+It's used test a command. It is usually used with 'if' command to perform true/false decisions.
+It has two forms, `test command` and `[ expressions/command ]`. The space between the two square brackets is necessary.
+Example:
+```
+if [ -f .bash.profile ]; then
+	echo "You have a bash_profile"
+else 
+	echo "You don't have a bash profile"
+fi
+```
+Alternate form,
+```
+if [ -f .bash.profile]
+then echo "You have a bash_profile"
+else echo "You don't have a bash profile"
+fi
+```
+
+## evenOdd script
+Made a basic script to check if an input is even or odd. The script first checks if the input is integer using regex then it checks if the number is 0 then finally it checks for even using modulo 2.
+It's a basic script utilizing majority of what i've learned till now about scripts like reading input, test expressions, exit command, if statements, and basic regex.
+
+
+

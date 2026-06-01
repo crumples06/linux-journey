@@ -1,0 +1,19 @@
+#!/bin/bash
+
+read -p "Enter a number: " num
+
+if ! [[ "$num" =~ ^[0-9]+$ ]]; then
+	echo "Enter only numbers"
+	exit 2
+fi
+
+if [ $num -eq 0 ]; then
+	echo "Number is 0"
+	exit 1
+fi
+
+if [ $((num % 2)) -eq 0 ]; then 
+	echo "Number is Even"
+else
+	echo "Number is Odd"
+fi
