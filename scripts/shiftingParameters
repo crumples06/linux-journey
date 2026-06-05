@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "You started with $# parameters"
+
+while [ "$1" != "" ]; do
+	echo "Parameter 1 equals to $1"
+	echo "You now have $# parameters"
+
+	# shifting all parameters down by 1
+	shift
+done
+

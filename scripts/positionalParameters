@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# $0 is the file name  
+# $1 is the first parameter 
+# $2 is the second parameter, and so on
+
+echo "Positional Parameters"
+echo '$0 = ' $0
+echo '$1 = ' $1
+echo '$2 = ' $2
+echo '$3 = ' $3
+

@@ -21,24 +21,56 @@ So, in linux, 0 means successful/true, and anything else is a failure.
 It's used test a command. It is usually used with 'if' command to perform true/false decisions.
 It has two forms, `test command` and `[ expressions/command ]`. The space between the two square brackets is necessary.
 Example:
-```
+'''
 if [ -f .bash.profile ]; then
 	echo "You have a bash_profile"
 else 
 	echo "You don't have a bash profile"
 fi
-```
+'''
 Alternate form,
-```
+'''
 if [ -f .bash.profile]
 then echo "You have a bash_profile"
 else echo "You don't have a bash profile"
 fi
-```
+'''
 
 ## evenOdd script
 Made a basic script to check if an input is even or odd. The script first checks if the input is integer using regex then it checks if the number is 0 then finally it checks for even using modulo 2.
 It's a basic script utilizing majority of what i've learned till now about scripts like reading input, test expressions, exit command, if statements, and basic regex.
 
+## Positional Parameters
+`command parameter1 parameter2 ...` this is the format of commands. in the script itself `$0` stores the command, `$1` stores the parameter1, `$2` stores the parameter2, and so on.
+`$#` maintains the number of parameters put when command is called. It does not include command name i.e. `$0`.
+`shift` is a shell built-in that shifts all positional parameters down by one. `$2` becomes `$1`, `$3` becomes `$2`, and so on.
+
+## Command line processor in script
+I added command line processor in my sysinfo script. It now has 3 different arguments it can accept.
+`-i` makes it interactive, it basically asks for a file name for the html file.
+`-h` is a help argument.
+`-f` is a file argument that accepts directly the file name for the output html file.
+
+## Flow Control
+### for loop
+```bash
+for i in {1..5}; do
+    echo $i
+done
+```
+
+### case
+```bash
+case word in
+    patterns ) commands ;;
+esac
+```
+
+### while
+```bash
+while [ condition ]; do
+	commands
+done
+```
 
 
