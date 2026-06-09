@@ -1,0 +1,12 @@
+#!/bin/bash
+
+INTERVAL=10
+LINES=15
+
+while true; do
+	clear
+	echo "=== $(date '+%Y-%m-%d %H:%M:%S') ==="
+	ps -eo pid,c,rss,stime,comm --sort -rss | head -"$LINES"
+	echo "-------------------------------------------"
+	sleep "$INTERVAL"
+done
