@@ -1,12 +1,20 @@
 #!/bin/bash
 
 INTERVAL=10
-LINES=15
+MAX_LINES=30
+THRESHOLD=500 # in MB
 
 while true; do
 	clear
 	echo "=== $(date '+%Y-%m-%d %H:%M:%S') ==="
-	ps -eo pid,c,rss,stime,comm --sort -rss | head -"$LINES"
-	echo "-------------------------------------------"
+	SNAPSHOT=$(ps -eo pid,c,rss,stime,comm --sort -rss | head -n "$MAX_LINES")
+	{ 
+		echo "$SNAPSHOT" | awk 'NR==1 {print $1, $2, "RSS(MB)", $4, $5} NR>1 {printf "%s %s %.0f %s %s\n", $1, $2, $3/1024, $4, $5}' 
+	} | column -t
+	echo ""
+	echo "--- Processes exceeding ${THRESHOLD}MB RAM ---"
+	{
+		echo "$SNAPSHOT" | awk -v threshold="$THRESHOLD" 'NR==1 { print } NR>1 && $3/1024 > threshold {printf "%s %s %.0f %s %s\n", $1, $2, $3/1024, $4, $5}'
+	} | column -t
 	sleep "$INTERVAL"
 done

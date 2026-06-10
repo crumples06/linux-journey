@@ -61,4 +61,31 @@ When i wanted to stop a process i used to randomly use Ctrl Z or Ctrl C, i thoug
 - Ctrl+Z (SIGSTOP) pauses/suspends the process (can be resumed)
 - Ctrl+Z doesn't kill any process, it is just frozen in memory waiting to be continued with `fg` or `bg`.
 
+## processSnapshot Script
+Made a script that shows list of processes that updates continuously. It is sorted by the ram the processes are using.
+It also prints the processes that exceed 500MB RAM usage. I used the `awk` command for this.
+One problem that i encountered was that in the ps command i had a `head -n "$LINES"` and i hs set the variable to 20, but it was still printing 44 lines.
+I found out that `$LINES` is a special shell variable that automatically holds the number of rows in the terminal window, and that is why my constraint wasn't working.
+I fixed it by simply changing the name of the variable to `$MAX_LINES`.
+
+## awk command
+It is a text processing command that is used to analyze, filter, and manipulate structured data such as logs,CSV files, and command outputs.
+`awk [options] 'pattern {action}' input-file > output-file`
+It looks at the text line by line. the first word can be represented by `$1`, the second word by `$2`, and so on.
+example: `ps -elf | awk '{print $1, $3, $5}'` This will print on terminal.
+
+`-v` is used to use variables in awk command. If i want to use an external variable in the awk command i can declare that command in the awk to use ot in the command.
+example: `awk -v threshold="$THRESHOLD" '$1>threshold {print $3}'`
+
+Built-in variables:
+- `$0, $1, $2, $3, ..`: `$0` represents the entire input line.
+- NR (Number of records): Keeps track of current line number bring processed. Starts from 1.
+- NF (Number of fields): Stores the total number of fields in the current line. It is a good way to access the last element by using `$NF`.
+- FS (Field Separator): Used to define the character used to split the input. Default is space, can be changed, like comma for csv files.
+- RS (Record Separator)
+- OFS (Output field separator)
+- ORS (Output record separator)
+
+ex: `awk 'NR==3, NR==6 {print NR,$0}' text.txt`. It will print lines 3 to 6 (inclusive)
+
 
