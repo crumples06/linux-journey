@@ -1,0 +1,12 @@
+#!/bin/bash
+
+ZOMBIES=$(ps -eo pid,s,comm | awk '$2 ~ /^Z/ { print }')
+
+if [[ -z "$ZOMBIES" ]]; then
+	echo "No zombie processes found"
+else
+	echo "PID S COMM"
+	echo "$ZOMBIES" 
+fi
+
+
