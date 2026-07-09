@@ -33,8 +33,8 @@ The best command using this that i will likely use a lot is : `ps -eo pid,c,comm
 - `kill process_id` : It sends a signal to the process asking it to clean up open files, save state and exit gracefully.
 - The process can ignore the signal. 
 - It's always best to first try this than forcefully killing it.
-- `kill -9 process_id` : It's not sent to the process, it is handled by the kernel. The kernel just distriys it completely
-- Open files may not br flushed, temp files wont be deleted, etc. It is a last resort used when process can't be closed using any other way.
+- `kill -9 process_id` : It's not sent to the process, it is handled by the kernel. The kernel just distroys it completely
+- Open files may not be flushed, temp files wont be deleted, etc. It is a last resort used when process can't be closed using any other way.
 
 - `killall process_name` : Targets by process name. ex: `killall brave` or `killall -9 brave`.
 - Useful when a program spawn many processes (like brave) an i dont want to kill them all using individual process ids.
