@@ -35,7 +35,35 @@ Exlpaination of some things in the putput above:
 - Tasks : 5 means that there are 5 threads/processes currently inside the service's cgroup (including children). [cgroup or control group oragnizes processes into hierarchial groups. It basically groups together processes, that is why i dont need to put `gdm3` in the command and i can just put the name of the group i.e. `gdm`. This cleared my doubt that i have had for a long time about how processes and services are fetched even i dont pu their full process name in the command turns the group names work and are much more simpler).
 - The lines containing dates are naturally recent log entries of the service.
 
- 	  
 
+`systemctl is-active gdm` and `systemctl is-failed gdm` tell me whether the service (in this case gdm) is active or not. Both commands will give the same output.
+`systemctl is-enabled` telld whether the service (gdm) is enabled or disabled. It's just a one word output.	
+  
+`systemctl list-units` lists all the loaded units. The list was way too big, impractical for any meaningful understanding.
+So it's better to be specific i think. 
+`systemctl list-units --type=service` will only list loaded units which are of the type service. When i executed this command i still thought the output is way too large.
+So i went more specific, `systemctl list-units --type=service --state=running` lists all loaded services which are running. I can put `--state=failed` to get the failed services.
 
+I can also start/stop/restart/reload services using the systemctl command. 
+`sudo systemctl start <service>` will start a disabled service.
+- restart stops and starts the service
+- reload tells the service to re-read it's configuration files without a full interruption. Not all services support this though.
+
+`systemctl` integrates with `journald`. Use `journalctl`:
+- `journalctl -u <service>` - I ran `journalctl -u bluetooth` and it showed me logs starting from may 22. It's hard to scroll to a speicific date if i want to see logs of that date. I will probably have to make a script if i want to do that.
+- `journalctl -fu bluetooth` make it so that i can see the real time logs of the service (bluetooth). I played around with it as it kept on showing logs when i turned bluetooth on and off, and also when i connected and disconnected a bluetooth device.
+- `journalctl -u gdm -b` showed logs since the last boot.
+- Ok so i realized i dont have to create a script to get logs of a specific date. `journalctl -u <service> --since "2026-07-13 10:00:00" --until "2026-07-13 11:00:00"` works just fine for this purpose.
+
+## systemd-analyze
+This command is great. This would have been a lot helpful previously when i was trying to optimize my ubuntu's boot time.
+- `systemd-analyze blame` lists all the systemd units that took part in the last boot. It also includes the time each one took to go from *starting* to *active*.
+- Here i found a service named `NetworkManager-wait-online.service` that was taking 5.485 seconds. This service blocks until the network is considered online.
+- I didnt have a service that absolutely required the network to be up during boot so i could safely mask this service and decrease my boot time.
+- `systemd-analyze critical-chain` gives the critical chain during boot. This also confirmed that the above service was taking up unnecessary boot time.
+- Just to be sure that nothing depended on that service i ran `systemctl list-dependencies network-online.target` to check for if anything has this service in it's dependencies. There wasn't any such unit.
+- I then masked the service by `sudo systemctl mask NetworkManager-wait-online.service` and rebooted my laptop.
+- After rebooting when i check my boot time using `systemd-analyze`, my boot time had dropped to 8.415 secs (from 10.538), making it 2.1 secs faster.
+
+  
 
