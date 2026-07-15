@@ -1,12 +1,15 @@
 #!/bin/bash
 
-echo "You started with $# parameters"
+set -euo pipefail
 
-while [ "$1" != "" ]; do
-	echo "Parameter 1 equals to $1"
-	echo "You now have $# parameters"
+echo "You started with $# parameter(s)"
+
+while [ "$#" -gt 0 ]; do
+	echo "You now have $# parameter(s)"
+	echo "The first parameter is $1"
 
 	# shifting all parameters down by 1
 	shift
+
 done
 
