@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+BOOT_TIME=$(systemd-analyze | grep -oP '[\d.]+(?=s \(userspace\))')
+THRESHOLD=8.55
+
+# echo "$BOOT_TIME" 
+
+if awk -v bt="$BOOT_TIME" -v th="$THRESHOLD" 'BEGIN{exit !(bt > th)}'; then
+	notify-send "Userspace time (${BOOT_TIME}s) exceeded the threshold (${THRESHOLD}s)"
+fi
+

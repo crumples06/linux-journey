@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 INTERVAL=10
 MAX_LINES=30

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # $0 is the file name  
 # $1 is the first parameter 

@@ -65,11 +65,43 @@ This command is great. This would have been a lot helpful previously when i was 
 - I then masked the service by `sudo systemctl mask NetworkManager-wait-online.service` and rebooted my laptop.
 - After rebooting when i check my boot time using `systemd-analyze`, my boot time had dropped to 8.415 secs (from 10.538), making it 2.1 secs faster.
 
-*15/07/26*
+
 ## scripts
 I learned that i should put the command `set -euo pipfail` at the start of all my scripts as it makes the script's failure more recognizable and will save me hours of puzzling over silent failures.
 I started putting this command at the start of my scripts and running them again to fix them and deal with any silent failues happening that i was not aware of.
 
 - `shiftingParameters` script - Fixed the problem of unbound variable it was causing. I wasn't checking if `$1` existed or not before using it. Normally this is a silent error but now i was able to see it and fix it. 
--   
+No other scripts were showing any problems.
+
+# boot-time-check script
+Created a script that checks the userspace boot time and notifies me using a notification (using notify-send command) if the boot time is above a certain threshold.
+For not i have harcoded the threshold's value but in the future i think i'm going to replace it with some sort of rolling average.
+I made it so that the scripts runs after every boot automatically.
+
+First i created a services file (`boot-time-check.services`) in `/etc/systemd/system`. 
+```
+[Unit]
+Description=Check userspace boot time and notify if slow
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/tanish/.local/bin/boot-time-check
+
+[Install]
+WantedBy=default.target
+```
+- `After=graphical-session.target` means that it will run after the GNOME session is fully up.
+- `Type=oneshot` means that it only runs once.
+- `ExexStart` is the absolute path for the script
+- `WantedBy=default.target` This is what makes it run at login
+
+After the service file is created the following steps were taken:
+- `systemctl --user daemon-reload` It just reloads 
+- `systemctl --user enable boot-time-check.service` This is what created the link that makes the `WantedBy=` field take effect.
+
+I put the script file in `~/.local/bin` file.
+	
+
+
 

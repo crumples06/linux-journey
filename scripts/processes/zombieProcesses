@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 ZOMBIES=$(ps -eo pid,s,comm | awk '$2 ~ /^Z/ { print }')
 
