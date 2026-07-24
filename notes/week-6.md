@@ -66,3 +66,40 @@ The `/bin` directory contains all the system wide commands needed by all the use
 
 - It contains a hierarchy of special files which represent the current state of the kernel.
 
+## Inode
+
+-  Inode (Index Node) is a special type of data structure that is created when a file system is initialized.
+- The total number of inodes determine the maximum number of files and directories that the file system can hold.
+- Each file is identified by an Inode.
+- An inode contains essential information (metadata) about a file.
+- When a file system is created a fixed number of inodes is allocated.
+
+Stored attributes:
+- File size
+- Permissions
+- File Type
+- Timestamps
+- Owner and group
+
+## Hard Links
+
+- Each hard linked file is assigned the same inode number as the original, therefore they both reference the same physical location.
+- Say that i did `ln original.txt hardlinked.txt` creating a hard link, both files point to the same content (physical location). So i can access the content by clicking any of these 2 files.
+- Hardlinks cannot span across multiple file systems.
+- Cannot create hard link for a directories (to avoid recursive loops).
+- Command to create hard links `ln [original file name] [link name]`.
+- if the original file is remove then the link will still show the contents as its pointing to the physical location and is not dependent upon the original file.
+
+## Soft Links (Symbolic link)
+
+- Each soft linked file contains a different inode value that points to the original file.
+- Soft links contains the path for the original file and not the content like a hard link.
+- They can be linked across different file systems.
+- It can link to a directory.
+- Breaks if the target is deleted. It becomes a "hanging link".
+- It breaks even when the original file's name is changed.
+- Command to create a soft link `ln -s [original file name] [link name]`.
+
+ 
+
+
