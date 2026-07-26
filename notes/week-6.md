@@ -4,19 +4,19 @@
 ## umask command
 
 This command changes the default permissions that a file has when it's created. 
-Whenever i make a script i have to change it's permissions with `chmod` to run it, i could change the default pemissions so that i dont have to do that but i don't think that will be a good idea and it's easy and quicj to change permissions of the scripts anyways.
+Whenever i make a script i have to change it's permissions with `chmod` to run it, i could change the default permissions so that i don't have to do that but i don't think that will be a good idea and it's easy and quick to change permissions of the scripts anyways.
 
 ## /etc/passwd
 
 This file is a user account database.
 Every line represents exactly one user account and has several fields separated by `:` :
 - username:password:UID:GID:comment:home_directory:shell
-- password: It just contains `x` meanind that the real password hash is stored in `/etc/shadow`
+- password: It just contains `x` meaning that the real password hash is stored in `/etc/shadow`
 - shell: The user's default login shell. ex: `/bin/bash`
 
 When i actually ran the command `cat /etc/passwd` intending to see how many user accounts there are on my laptop, i was shocked to find 49 different accounts.
 Then i came to know that there are 2 different type of accounts i.e human accounts and system accounts. For example my laptop only contains two human accounts namely `user` and `tanish`.
-System accounts exist to run specific background processes with limited privilages not meant for human login. This separation is for security purposes.
+System accounts exist to run specific background processes with limited privileges not meant for human login. This separation is for security purposes.
 
 ## File Hierarchy Structure
 
@@ -50,7 +50,7 @@ The `/bin` directory contains all the system wide commands needed by all the use
 
 ### home directory
 
-- Every non-root user has a directory in home folder. For example my home folder has `tanish` folder. When i run `cd ~` it taked me there.
+- Every non-root user has a directory in home folder. For example my home folder has `tanish` folder. When i run `cd ~` it took me there.
 - It also has it's own bin, dev, etc folders
 
 ### media directory
@@ -65,6 +65,9 @@ The `/bin` directory contains all the system wide commands needed by all the use
 ### proc directory
 
 - It contains a hierarchy of special files which represent the current state of the kernel.
+- In contains directories for every running process. The directories are named after their process id.
+- A process can read it's own information from `/proc.PID/*` with no extra permissions.
+- 
 
 ## Inode
 
@@ -100,6 +103,45 @@ Stored attributes:
 - It breaks even when the original file's name is changed.
 - Command to create a soft link `ln -s [original file name] [link name]`.
 
- 
+## ss command
+
+Started learning this, then i discovered i need to learn more about sockets first.
+
+### sockets
+It's a software endpoint facilitating bidirectional communication between process regardless of their location within the system or even beyond it's borders.
+two types of sockets:
+1. Network Sockets: These enable communication across networks using protocols like TCP/IP.
+2. Domain Sockets: These facilitate communication between processes within the same system.
+
+The ss command (Socket Statistic) is used to display detailed information about network sockets.
+The output of the `ss` command is:
+```
+tanish@tanish-Ideapd-S340-14IIL:~/projects/linux-journey$ ss
+RTNETLINK answers: Invalid argument
+Netid      State        Recv-Q       Send-Q           Local Address:Port             Peer Address:Port             
+u_str      ESTAB        0            0                            * 97273                       * 97274            
+u_str      ESTAB        0            0                            * 87841                       * 91408            
+```
+
+- **State**: Indicated the current status of socket, such as LISTEN (waiting for connection) and ESTABLISHED (active communication between systems).
+- **Recv-Q / Send-Q**: Shows the amount of data queued for sending and receiving.
+- **Local Address:Port**: Displays the IP address and port number on your system where the socket is created or listening for connections.
+- **Peer Address:Port**: Represents the remote system’s IP address and port number connected to your machine.
+
+`ss -s` gives a summary of all socket types,
+```
+tanish@tanish-Ideapd-S340-14IIL:~/projects/linux-journey$ ss -s
+Total: 1110
+TCP:   22 (estab 12, closed 6, orphaned 0, timewait 5)
+
+Transport Total     IP        IPv6
+RAW	  1         0         1        
+UDP	  16        10        6        
+TCP	  16        10        6        
+INET	  33        20        13       
+FRAG	  0         0         0    
+```
+
+
 
 
