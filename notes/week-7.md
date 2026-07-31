@@ -75,4 +75,61 @@ traceroute to google.com (2404:6800:4013:802::64), 30 hops max, 80 byte packets
 ```
 
 ## SSH (Secure Shell)
+SSH is a method for secure remote login from one computer to another. It provides strong authentication, protects communications security and integrity with strong encryption.
 
+The protocol works in client-server model. The SSH client initiates the connection process and uses public key cryptography to verify the identity of the SSH server.
+
+SSH is often used to controlling servers remotely, for managing infrastructure and for transferring files.
+
+SSH allows for port forwarding or tunneling. It allows for sending messages by passing them through multiple other ip addresses/ports. Say a server only accepts requests from other computers within a network, so if i want to send a request from a remote location, i have to pass it through a computer within that network that accepts remote connections which will then pass it to the server.
+
+## Python server
+I made a simple server using python. It just listens on a port continuously.
+It prints all the access it gets onto the terminal (It's a feature of the python server library).
+I put it in the linux-journey folder where all these notes and scripts are.
+When i ran `localhost:8000` on a browser, i could access all the files in the directory.
+
+I can even see the port,
+```
+tanish@tanish-Ideapd-S340-14IIL:~/projects/linux-journey$ ss -tlnp 'sport = 8000'
+State          Recv-Q         Send-Q       Local Address:Port          Peer Address:Port        Process                                         
+LISTEN         0              5                  0.0.0.0:8000               0.0.0.0:*           users:(("python3",pid=13065,fd=3))    
+```
+
+I can also use the curl command to access it,
+```
+tanish@tanish-Ideapd-S340-14IIL:~/projects/linux-journey$ curl -X GET localhost:8000/README.md
+# linux-journey
+This repository is to document my journey in learning linux.
+```
+```
+tanish@tanish-Ideapd-S340-14IIL:~/projects/linux-journey$ curl -X GET localhost:8000/notes/
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style type="text/css">
+:root {
+color-scheme: light dark;
+}
+</style>
+<title>Directory listing for /notes/</title>
+</head>
+<body>
+<h1>Directory listing for /notes/</h1>
+<hr>
+<ul>
+<li><a href="week-1.md">week-1.md</a></li>
+<li><a href="week-2.md">week-2.md</a></li>
+<li><a href="week-3.md">week-3.md</a></li>
+<li><a href="week-4.md">week-4.md</a></li>
+<li><a href="week-5.md">week-5.md</a></li>
+<li><a href="week-6.md">week-6.md</a></li>
+<li><a href="week-7.md">week-7.md</a></li>
+</ul>
+<hr>
+</body>
+</html>
+```
+
+    
