@@ -132,4 +132,49 @@ color-scheme: light dark;
 </html>
 ```
 
-    
+
+## curl
+steps that happen wen i curl a URL:
+1. `curl ` parses the url and figures out what protocol to use (http,ftp,etc).
+2. `curl` asks the system resolver to turn it into an IP address. This usually goes through `/etc/hosts`, then a DNS server, possibly hitting a local DNS cache along the way.
+3. `curl` opens up a TCP connection to that IP on the target port.
+4. Over that connection, curl sends a plain http request. Any headers added with `-H`, cookies with `-b`, request body with `-d`, etc get folded in here.
+5. The server processes and responds with an http response: a status line (`HTTP/1.1 200 OK`), response headers and a body.
+6. `curl` reads the response. By default it prints the body to stdout. Depending on flags:
+    - `-i` includes response headers 
+    - `-o file` writes to a file instead
+    - `-L` tells curl to follow redirects
+    - `-v` shows the whole exchange, including the TLS handshake and headers.
+7. Once the response is received, the TCP connection is closed or kept alive/reused if `Connection: keep-alive`.
+
+## /etc/hosts
+As your machine gets started, it will need to know the mapping of some hostnames to IP addresses before DNS can be referenced. This mapping is kept in the /etc/hosts file. 
+In the absence of a name server, any network program on your system consults this file to determine the IP address that corresponds to a host name.
+```
+           IPAddress                     Hostname    		         Alias
+           127.0.0.1			localhost	 	                 deep.openna.com
+           208.164.186.1		deep.openna.com		 deep
+           208.164.186.2		mail.openna.com		 mail
+           208.164.186.3		web.openna.com		 web
+```
+
+It's a static lookup table for specific hostnames.
+
+## /etc/resolv.conf
+This file is known as the configuration file for DNS queries. 
+It stores the IP address of nameservers (the DNS servers i talked about before in curl in step 2). At first i thought that curl looks in `/etc/hosts` for the ip address of DNS server but then i found out that it actually looks for it in `/etc/resolv.conf`, the `/etc/hosts` is just a default file that every command looks at to resolve domain names just in case.
+
+In Linux, the resolver refers to a library that consists of a collection of functions that does domain name translation. Specifically, it translates domain names to IP addresses by querying the Domain Name Server (DNS). The /etc/resolv.conf file is the file that configures the domain name resolver.
+The usual resolv.conf file configures at least 1 nameserver that points to the DNS to query.
+
+Nameservers are DNS servers that answer DNS queries about the domains they are authoritative for. The `nameserver` directive specifies the IP address of the domain name server that the resolver can query against.
+
+Now i had a question that how does this file get populated with the ip address of the nameserver? when i go different places, it is automatically able to find the nameserver nearby, so how does the file gets updated with the ip address of the nameserver.
+When a machine joins a network, it does a DHCP handshake with the router. The DHCP response includes IP address and gateway, and also one or more DNS server IPs.
+
+
+
+
+
+
+
