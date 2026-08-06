@@ -25,4 +25,38 @@ To get the ip address of the phone i ran `ip addr show wlan0` which prompted tha
 The ip addr command shows the ip address in the format `inet ip-address`.
 From my laptop, i connected it by `ssh -p 8022 u0_a651@ip-address`. `u0_a651` is my termex username.
 
+I set the wifi from my phone to Static from DHCP, as it will prevent the ip from changing every time i start the server. Now every time i just have to open termux, run `sshd` and then run the `ssh` command in my laptop.
+I also ran `termux-wake-lock` so that termux keeps running even when the screen turns off.
+
+i can also ping the server,
+```
+tanish@tanish-Ideapd-S340-14IIL:~/.ssh$ ping 192.168.29.172
+PING 192.168.29.172 (192.168.29.172) 56(84) bytes of data.
+64 bytes from 192.168.29.172: icmp_seq=1 ttl=64 time=651 ms
+64 bytes from 192.168.29.172: icmp_seq=2 ttl=64 time=9.97 ms
+64 bytes from 192.168.29.172: icmp_seq=3 ttl=64 time=8.21 ms
+^C
+--- 192.168.29.172 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 8.214/222.903/650.524/302.374 ms
+```
+
+
+## Reverse proxy
+It is a type of server that acts as a middle layer between the user and the actual web server. Instead of users accessing the web server directly, all the requests pass through the reverse proxy. It then forwards the requests appropriately. It helps websites stay secure, perform better, and manage more users at once. They also protect real server IP, perform load balancing, and handle traffic spikes.
+
+Tools: Ngnix, HAProxy, Traefik, Apache.
+
+## ufw command
+It is used to define rules for controlling network traffic. It is built on top of `iptables`. 
+- By default UFW denies all incoming connections and allows all outgoing connections. 
+- If connected via SSH, enable SSH access `sudo ufw allow OpenSSH` before activating ufw to avoid losing remote access.
+- `ufw` can allow or block traffic from specific ip addresses or subnets using `ufw allow from IP` or `ufw deny from subnet`.
+- Current ufw ruleset can be checked using `sudo ufw status` or `sudo ufw status verbose`.
+- To enable ufw : `sudo ufw enable`
+
+## DDNS (Dynamic DNS)
+DDNS is a service that keeps the DNS updated with a web property's correct IP address, even of that IP address is constantly being updated.
+Once a device’s IP address is assigned, the DDNS client (often built into a router or installed as software) detects the new IP address and sends an update request to the Primary DNS Server.
+The request contains the hostname (e.g., myhome.dyndns.org) and the updated IP address.
 
