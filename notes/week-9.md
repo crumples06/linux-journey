@@ -78,3 +78,35 @@ Bind mounts are appropriate for the following types of use case:
 - Sharing source code or build artifacts between a development environment on the Docker host and a container.
 - When you want to create or generate files in a container and persist the files onto the host's filesystem.
 - Sharing configuration files from the host machine to containers
+
+## python server in docker
+I wanted to have a server running in a container and see what can i do with it. I made a simple python server and a basic docker file:
+```
+FROM python
+COPY server.py /server/
+WORKDIR /server
+CMD python3 server.py
+```
+
+I built the image using `docker build .`, i ran this command in the directory where these files were stored.
+When i went to see my images using `docker images`, the output wasn't showing my recently created image, but i could see it in docker desktop. So i tried `docker images -a`, now i could see the images, here i notices that the image name was <none> as i forgot to name while building. So i named the image by `docker image-id python-server:latest`. Now when i ran `docker images` i could see the image.
+
+I ran the image i.e. making a container by `docker run -it python-server`. The `-it` flag runs it interactively with a terminal.
+If i want to interact with the server i need to attach a port when running the container by, `docker run -it -p 8080:8080 python-server`, then i can interact with it by `curl http://localhost:8080`.
+
+## python server in docker
+I wanted to have a server running in a container and see what can i do with it. I made a simple python server and a basic docker file:
+```
+FROM python
+COPY server.py /server/
+WORKDIR /server
+CMD python3 server.py
+```
+
+I built the image using `docker build .`, i ran this command in the directory where these files were stored.
+When i went to see my images using `docker images`, the output wasn't showing my recently created image, but i could see it in docker desktop. So i tried `docker images -a`, now i could see the images, here i notices that the image name was <none> as i forgot to name while building. So i named the image by `docker image-id python-server:latest`. Now when i ran `docker images` i could see the image.
+
+I ran the image i.e. making a container by `docker run -it python-server`. The `-it` flag runs it interactively with a terminal.
+If i want to interact with the server i need to attach a port when running the container by, `docker run -it -p 8080:8080 python-server`, then i can interact with it by `curl http://localhost:8080`.
+
+
