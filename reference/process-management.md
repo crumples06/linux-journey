@@ -66,9 +66,9 @@ Prints "No zombie processes found" if none exist.
 
 ## Ctrl+C vs Ctrl+Z
 
-Used to think these did the same thing — they don't:
-- **Ctrl+C** (SIGINT) — terminates the process.
-- **Ctrl+Z** (SIGSTOP) — pauses/suspends the process; it stays frozen in memory, not killed, and can be resumed with `fg` (foreground) or `bg` (background).
+Used to think these did the same thing. They don't:
+- **Ctrl+C** sends **SIGINT**: asks the process to terminate (it can catch or ignore it).
+- **Ctrl+Z** sends **SIGTSTP** ("terminal stop"): suspends the process. It stays frozen in memory, not killed, and is resumed with `fg` or `bg`.
 
 ## Background jobs
 
@@ -83,3 +83,24 @@ Used to think these did the same thing — they don't:
 
 - **zombieProcesses** — reports any zombie processes' PID, state, and command (see awk snippet above).
 - **processSnapshot** — continuously updating, RAM-sorted process list; flags anything over 500MB using `awk`. (See `shell-scripting.md` for the `$LINES` vs `$MAX_LINES` gotcha encountered while building this.)
+
+## Init scripts without systemd
+
+In containers with no init system, a daemon gets a SysV-style script using `start-stop-daemon` to background it and track it through a pidfile.
+
+```sh
+start-stop-daemon --start --background --make-pidfile --pidfile /var/run/foo.pid \
+  --exec /usr/local/bin/foo -- --flag
+start-stop-daemon --stop --pidfile /var/run/foo.pid
+```
+Lessons:
+- **`--make-pidfile`** is for daemons that don't write their own. If the program manages its own pidfile (Grafana does), drop it. `--make-pidfile` writes the file as root *before* `--chuid` drops privileges, so the program can't overwrite it later.
+- `--chuid <user>` runs the daemon as a non-root user. Anything it needs (pidfile directory, runtime dir, config) must be **owned** by that user, not merely mode-readable.
+- Without systemd or apt postinst scripts, runtime directories (`/run/<svc>`) must be created explicitly.
+- To translate a systemd unit into an init script, read the unit file and map `ExecStart`, `EnvironmentFile`, `User`/`Group`, `RuntimeDirectory`.
+- When a daemon won't start via the script, **run the binary directly in the foreground** so errors print to the terminal.
+- CRLF line endings in a script break the shebang and show up as a misleading "No such file or directory" (`git.md`).
+- PID 1 in a container: if it exits, the container stops; use `reload`, not `restart`.
+
+See `monitoring/prometheus-grafana.md` for where this was used.
+

@@ -85,3 +85,15 @@ Wanted a self-hosted server without paying for a VPS — repurposed an old Andro
 8. Run `termux-wake-lock` so Termux keeps running even when the screen is off (otherwise Android would likely suspend it).
 
 Can also just `ping` the phone directly to confirm reachability on the LAN before trying SSH.
+
+## Why Docker doesn't install on Termux
+
+I wrote a Gitea compose file and tested it on my laptop, but Docker can't be installed in Termux. Docker relies on kernel features (**cgroups** and **namespaces**) that Android kernels are usually compiled without.
+
+Workaround I found (a GitHub guide with long, complicated commands): use **QEMU**, a CPU/hardware emulator, to simulate an entire x86_64 computer, install a lightweight distro (Alpine) in that VM, and run Docker inside it like on any Linux box.
+
+Trade-offs to weigh: it is emulation, so it is slow; the phone becomes a VM host; and it adds a lot of setup versus a small VPS or running the app directly in Termux. See `projects/gitea-self-hosted.md` for the decision status.
+
+## SSH tunneling note (extend the existing SSH section)
+
+For the jump-host pattern (`ProxyJump`, bastion, `ssh_config`), see `security/access-control.md`.

@@ -67,3 +67,41 @@ curl http://localhost:8080
 **Things I tripped on:**
 - Forgetting to name the image at build time left it as `<none>` in `docker images` (had to use `-a` to even see it, then tag it after the fact).
 - The container's internal port isn't reachable from the host until explicitly published with `-p host_port:container_port`.
+
+## Containers without an init system
+
+When a container runs just `sshd -D` (or any single daemon) as PID 1, nothing supervises children:
+- **If PID 1 exits, the container stops.** `service ssh restart` kills the container, because the process Docker is watching ends. Use `reload` to re-read config in place.
+- `systemd`-based tooling (the Ansible `systemd` module, `systemctl`) fails. Use `service` or the init script directly.
+- Things systemd and apt postinst scripts do invisibly (create `/run/<svc>`, plugin directories, pidfile ownership) have to be done explicitly.
+- Service names follow distro convention: on Ubuntu the init script is `ssh`, though the binary is `sshd`. Check `ls /etc/init.d/`.
+- Non-interactive `apt-get install` needs `-y`, or the build/task hangs waiting for confirmation.
+
+## `exec` and signal handling in entrypoints
+
+```sh
+#!/bin/sh
+ssh-keygen -A          # generate host keys that don't exist yet
+exec sshd -D           # replace the shell with sshd
+```
+- Without `exec`, the shell script stays PID 1 and `docker stop`'s signal never reaches `sshd`, so Docker waits out its timeout and then kills it.
+
+## Don't bake secrets or identities into an image layer
+
+- Packages like `openssh-server` generate **host keys at install time**. Containers from one image would share identical host keys, defeating the point of host identity.
+- Fix: delete them in the **same `RUN`** as the install (so they never persist in a layer), and generate them at container start in the entrypoint. Store them on a named volume so they survive recreation.
+
+## Build-time vs runtime reminders
+
+- `ARG` + `build.args`: build time. `ENV`/`environment:`: runtime.
+- `RUN` runs at build, `CMD` at container start.
+- `CMD` in a **healthcheck** `test:` does not use a shell, `CMD-SHELL` does. See `compose.md`.
+
+## Changing what the images contain for Ansible targets
+
+For Ansible to manage a plain container, the image needs Python and a sudo-capable user:
+```dockerfile
+RUN apt-get update && apt-get install -y openssh-server sudo python3
+RUN echo "admin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/admin && chmod 440 /etc/sudoers.d/admin
+```
+(Passwordless sudo is a deliberate lab tradeoff; see `security/access-control.md`.)
