@@ -40,5 +40,86 @@ So, i made some changes,
 - The container still needs a foreground process, since it’s currently kept alive by sshd. Used `CMD ["sleep", "infinity"]` so docker compose exec keeps working.
 
 
+### ssh_config_control
+This is the SSH client config the control container uses. Ansible doesn’t have its own SSH settings here. It just runs the normal ssh binary with this file.
+`User admin` to log in as admin, the user certificate’s principal is also admin, and sshd checks that they match. 
+It also includes the private key and the certificate that was generated in the playbook. 
+`UserKnownHostsFile /ca/known_hosts` is the only source of host trust, bind-mounted read-only from ./ca. It holds the single @cert-authority line.
+I also use the host private key and signed certificate (signed public key by ca) using `IdentityFile` and `CertificateFile` respectively.
 
+### Segmented-bastion-ca build from scratch
+I realized that the project depends a lot on the `ca` setup, so i was wondering how long and how many steps does it actually take to run the project into a new pc for a person who cloned this project form my repository. I already did all these steps for the CI but i wanted to run them myself.
 
+The steps the need to be done are:
+#### Step 1: Clear the original author's material
+Need to delete `ca/*`, both files in `group_vars/all`, and `keys/key.pub`
+
+#### Step 2: Start the CA and capture its secrets
+Start the `ca` container and read the provisioner password from it's logs and compute the root certificate’s fingerprint.
+
+#### Step 3: Export the CA’s public keys
+Copy the user CA and host CA public keys into ca/, and build ca/known_hosts with one @cert-authority line.
+
+#### Step 4: Build and start everything else
+Build the SSH image and the control image, and starts the bastion, both servers and the control node.
+
+#### Step 5: Write the Ansible variables and the vault
+- `vars.yml` holds the fingerprint, the certificate path, and `ca_provisioner_password: "{{ vault_ca_provisioner_password }}"`.
+- `.vault_pass` holds the password that unlocks the vault.
+- `vault.yml` holds the CA provisioner password, then ansible-vault encrypt encrypts it.
+
+#### Step 6: First playbook run (bootstrap)
+The playbook ran with `ssh_config_bootstrap`, which uses `StrictHostKeyChecking accept-new` and a scratch known-hosts file.
+Strict checking needs host certificates, but the playbook is what creates them. `accept-new` is used for this one run only, and it’s passed through `-e` because extra `vars` override the inventory’s `ansible_ssh_common_args`.
+
+#### Step 7: Second run with strict checking
+The same playbook, with the normal strict config.
+
+#### Step 8: Your own user key and certificate
+Generate a key, copy its public half into the CA container, sign it for principal admin with a 1-hour lifetime, copy the certificate back, and load the key into ssh-agent.
+
+This was extremely tedious so i decided to automate this process as much as i can as i did in the CI pipeline.
+
+### Automation
+To automate the majority of the startup i used bash scripts stored in `scripts/`.
+
+#### Stage 1: Removing the root causes
+
+CA password from `.env`. I set `DOCKER_STEPCA_INIT_PASSWORD: ${CA_PASSWORD:?...}` in the compose file, so the CA starts with a password I generated, not a random one shown once in its logs. The `:?` guard turns a missing value into a readable failure instead of an empty password. Side effect: every docker compose command, including down, needs `CA_PASSWORD` to parse the file. That bit me at reset time, covered below.
+
+Mount `user_ca.pub` instead of baking it in. I deleted the `COPY ./ca/user_ca.pub` line from the Dockerfile and added a read-only bind mount on each SSH host. This removes the need to rebuild images when the user CA changes, and the image no longer contains lab-specific material. The cost is that the file must exist before the containers start, or Docker creates a directory in its place. The script guarantees the order.
+
+Stop committing lab-specific files. I gitignored `ca/`, `keys/`, `vars.yml`, `vault.yml` and the generated bootstrap config, and untracked them with `git rm --cached`. After that, a fresh clone has nothing stale to clear, and a success can only be explained by the lab’s own CA.
+
+Smaller changes. `.gitattributes` forces LF on shell scripts, because CRLF breaks the container entrypoint with a bad interpreter error on Windows. I deleted `docker-compose.ci.yml`, since `.env` now does its job.
+
+#### Stage 2: scripts/bootstrap.sh
+
+I moved the CI workflow’s setup logic into a script that is safe to rerun. In order:
+
+1. Generate secrets once. If `.env` doesn’t exist, write a random CA password and a random vault password into it, then load it.
+2. Start the CA alone and wait for it to be healthy. Everything downstream depends on its output.
+3. Export public material. Copy the user CA and host CA public keys into `ca/`, build `ca/known_hosts` with a single `@cert-authority` line, and read the root fingerprint. Reading the fingerprint from the CA I just created is the one trust decision I’m happy to automate in a lab. In a real deployment it would be recorded out of band.
+4. Generate the Ansible variables. `vars.yml` gets the fingerprint, the certificate path, and a reference to the vault variable. `vault.yml` gets the provisioner password.
+5. Build and start everything else.
+6. Encrypt the vault. The vault password file is written inside the control container, not on the bind mount, and `ANSIBLE_VAULT_PASSWORD_FILE` points at it. This sidesteps a Windows problem I hit earlier, where bind-mounted files show up as executable and Ansible tries to run the password file as a script.
+7. Run the relaxed bootstrap playbook only if some host has no certificate. The first run has a chicken-and-egg problem: strict host checking needs host certificates, but the playbook creates them. So that one run uses a config with accept-new and a scratch known-hosts file.
+8. Run the playbook again with strict checking. This is the proof. It only succeeds if the hosts now present CA-signed certificates the control node accepts.
+
+#### Stage 3: login.sh and reset.sh
+
+`login.sh` replaces the `docker cp` / `docker exec` routine I’d repeat every hour. It generates my key if needed, has the CA sign it as a 1-hour user certificate for principal admin, copies the certificate back, and loads the key into ssh-agent. A `KEY_ID` variable sets the certificate’s key ID, which matters for CI.
+
+`reset.sh` runs `docker compose down -v` and deletes everything generated: `.env`, the CA’s exported files, the vars and vault, my keys. It passes a dummy `CA_PASSWORD` to down, because compose has to parse the file before it can tear anything down.
+
+#### Stage 4: One path for humans and CI
+
+The workflow shrank from about fifteen setup steps to this:
+
+1. Write `.env` with the CI password.
+2. Start the CA and lower the minimum SSH certificate duration on the throwaway CI CA, so the expiry test takes seconds. The lab CA is untouched.
+3. Run `bootstrap.sh`.
+4. Run `login.sh` with `KEY_ID=ci-user`.
+5. Run the positive tests, then the negative tests.
+
+CI now exercises exactly the path a human follows, including the vault, so the README and the pipeline can’t drift apart. The workflow ran to completion on a blank runner.
