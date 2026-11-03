@@ -123,3 +123,15 @@ The workflow shrank from about fifteen setup steps to this:
 5. Run the positive tests, then the negative tests.
 
 CI now exercises exactly the path a human follows, including the vault, so the README and the pipeline can’t drift apart. The workflow ran to completion on a blank runner.
+
+# k8s guestbbok
+Today I started learning Kubernetes properly, using a guestbook app as the practice project. The app is a small API that records entries in MySQL and shows which Pod served each request, with 3 replicas behind a Service and an Ingress.
+
+The core idea is that you don’t tell Kubernetes what to do. You declare what you want to be true, and controllers keep working until reality matches. That’s different from Ansible, which converges once when you run it and then stops looking.
+
+I tested this by hand:
+
+- I created a Deployment with 3 replicas and deleted one Pod. A replacement appeared within seconds, and the other two weren’t touched.
+- The chain is Deployment → ReplicaSet → Pods, linked by ownerReferences. Deleting the Deployment removed everything below it.
+- A Deployment finds its Pods with a label selector, which must match the labels in its Pod template. When I relabeled a Pod to `app=stranger`, the ReplicaSet released it and started a replacement, and the Pod kept running as an orphan. When I relabeled it back, it was adopted again and the newest Pod was deleted to get back to 3.
+- A Service works the same way. It doesn’t contain Pods, it selects them by label and lists only the Ready ones as endpoints. Relabeling a Pod dropped its IP from the list immediately.
