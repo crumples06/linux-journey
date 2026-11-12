@@ -94,5 +94,70 @@ Each path in an Ingress is required to have a corresponding path type. Paths tha
 - `Prefix`: Matches based on a URL path prefix split by `/`.
 
 
-## StatefulSet
+### StatefulSet
+A StatefulSet runs a group of Pods, and maintains a sticky identity for each of those Pods. This is useful for managing applications that need persistent storage or a stable, unique network identity.
+Deleting and/or scaling a StatefulSet down will not delete the volumes associated with the StatefulSet.
+
+Important fields:
+`serviceName: ` is the governing service. It tells Kubernetes which Service owns the pods' network identity.
+Just like in Deployment, there is a `template` it's `metadata.labeld.app` and `spec` and it's `spec.containers`.
+In the `containers` the container is described like in deployment. with `name`, `image`, `ports`, `env`, `readinessProbe`, etc. Importantly for this particulat object there is one more thing in `containers`, `volumeMounts`. It mounts the named volume.
+
+After the `template` there is `volumeClassTemplates`, which has `metadata.name` (i.e. the name of the volume which is also used in the `volumeMounts` in `containers`), `spec.accessModes`, `spec.resources`, etc.
+
+
+## k8s-guestbook
+
+In this project there are the following components:
+- A simple flask server with database connection
+- dockerfile to put the server file in an image
+- `api.yaml` that contains the guestbook `deployment` and it's corresponding `service`
+- `config.yaml` that contains a `ConfigMap` for mysql environment variables and a `Secret` that contains mysql and root password
+- `ingress.yaml` that contains nginx `ingress`
+- 'mysql.yaml` that contains a `StatefulSet` for the mysql database and it's corresponding `service`
+
+
+The app is made of four YAML files. Together they describe the whole system, and traffic flows through them like this:
+`Ingress -> Service (guestbook-api) -> API Pods -> Service (mysql) -> MySQL Pod -> PVC`
+
+1. `config.yaml`: configuration and secrets
+
+This file holds two objects separated by `---`.
+
+ConfigMap `guestbook-config` stores non-sensitive settings: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`. The value `DB_HOST: mysql` works because it is the name of the MySQL Service, and Kubernetes DNS resolves Service names inside the cluster. Port is quoted (`"3306"`) because ConfigMap values must be strings.
+
+Secret `mysql-secret` stores `MYSQL_ROOT_PASSWORD` and `DB_PASSWORD`. I wrote them under `stringData`, so I could use plain text, and Kubernetes stores them base64-encoded. Base64 is encoding, not encryption, so anyone with access to the Secret can decode it. 
+
+2. `mysql.yaml`: the database
+
+Service `mysql` gives the database a stable name and virtual IP. Pods come and go and change IP addresses, but `mysql:3306` stays fixed. The `selector: app: mysql` decides which Pods receive the traffic.
+
+StatefulSet `mysql` runs the database itself. I used a StatefulSet instead of a Deployment because a database needs stable identity and storage. The Pod is always called `mysql-0`, and it keeps the same volume when it is recreated.
+
+- The `env` section builds MySQL’s setup variables from the Secret and ConfigMap, so MySQL creates the `guestbook` database and user on first start.
+- The `readinessProbe` runs `mysqladmin ping`. The Pod only counts as Ready (and only receives traffic) once MySQL answers.
+- `volumeClaimTemplates` creates a 1Gi `PersistentVolumeClaim` named `data-mysql-0` and mounts it at `/var/lib/mysql`. The data lives in that volume, so deleting the Pod does not delete the data.
+
+3. `api.yaml`: the application
+
+Deployment `guestbook-api` keeps 3 identical Pods running.
+
+- `image: guestbook-api:1.0` with `imagePullPolicy: IfNotPresent` uses the image I loaded into the cluster instead of pulling from a registry.
+- `envFrom` loads every key of the ConfigMap as an environment variable. `env` with `secretKeyRef` pulls only `DB_PASSWORD` from the Secret. The two styles do the same job, with `envFrom` being bulk and `secretKeyRef` being per key.
+- The readiness probe (`/healthz`) controls whether a Pod receives traffic. The liveness probe controls whether the container gets restarted if it hangs, and its `initialDelaySeconds: 20` gives the app time to start so it isn’t killed early.
+- `resources` sets a CPU and memory request (what the scheduler reserves) and a memory limit (exceed it and the container is `OOMKilled`). I set no CPU limit.
+
+Service `guestbook-api` load-balances across the Pods matching `app: guestbook-api`. It listens on port 80 and forwards to the container’s port 3000 (`targetPort`). This is where the pod field in the responses started changing.
+
+4. `ingress.yaml`: the entry from outside
+
+Ingress guestbook is a set of routing rules for the `ingress-nginx` controller. 
+It says: requests for host `guestbook.local` with any path starting with `/` (`pathType: Prefix`) go to Service `guestbook-api` on port 80. `ingressClassName: nginx` tells the right controller to pick it up. On its own, an Ingress does nothing, because the controller (running in the `ingress-nginx` namespace) reads the rules and configures nginx.
+
+### Testing
+I installed the ingress-nginx controller, then ran `kubectl apply -f k8s/`. I tested with curl: a POST followed by several GETs. The pod field changed between requests, so the Service was spreading traffic across replicas.
+
+`Host header:` the single controller routes by the Host header (name-based virtual hosting). `localhost` doesn’t match my `guestbook.local` rule, so curl needs `-H "Host: guestbook.local"`. In production, DNS does this automatically. 
+Instead of having to set the Host everytime in `curl`, i changed the `host: guestbook.local` in `ingress.yaml` to `host: localhost`, so now the default Host as `localhost` works and I don't have to change it to `guestbook.local`.
+
 
